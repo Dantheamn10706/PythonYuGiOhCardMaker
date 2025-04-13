@@ -23,6 +23,95 @@
   <ItemGroup>
     <Compile Include="PythonCardMaker.py" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Assests\" />
+    <Folder Include="Assests\Attributes\" />
+    <Folder Include="Assests\Banner\" />
+    <Folder Include="Assests\Fonts\" />
+    <Folder Include="Assests\frames\" />
+    <Folder Include="Assests\icons\" />
+    <Folder Include="Assests\Level\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assests\Attributes\Dark.png" />
+    <Content Include="Assests\Attributes\Divine.png" />
+    <Content Include="Assests\Attributes\Earth.png" />
+    <Content Include="Assests\Attributes\Fire.png" />
+    <Content Include="Assests\Attributes\Light.png" />
+    <Content Include="Assests\Attributes\Spell.png" />
+    <Content Include="Assests\Attributes\Trap.png" />
+    <Content Include="Assests\Attributes\Water.png" />
+    <Content Include="Assests\Attributes\Wind.png" />
+    <Content Include="Assests\Banner\Spell_Continuous.png" />
+    <Content Include="Assests\Banner\Spell_Equip.png" />
+    <Content Include="Assests\Banner\Spell_Field.png" />
+    <Content Include="Assests\Banner\Spell_Normal.png" />
+    <Content Include="Assests\Banner\Spell_Quick-Play.png" />
+    <Content Include="Assests\Banner\Spell_Ritual.png" />
+    <Content Include="Assests\Banner\Trap_Continuous.png" />
+    <Content Include="Assests\Banner\Trap_Counter.png" />
+    <Content Include="Assests\Banner\Trap_Normal.png" />
+    <Content Include="Assests\Fonts\911Fonts.com_MatrixRegularSmallCapsRegular__-_911fonts.com_fonts_owRo.ttf" />
+    <Content Include="Assests\Fonts\BankGothic Md BT Medium.ttf" />
+    <Content Include="Assests\Fonts\itcstoneserif.ttf" />
+    <Content Include="Assests\Fonts\Matrix Book Vietnamese.TTF" />
+    <Content Include="Assests\Fonts\Matrix Book.ttf" />
+    <Content Include="Assests\Fonts\Matrix.ttf" />
+    <Content Include="Assests\Fonts\MatrixBold.otf" />
+    <Content Include="Assests\Fonts\MatrixBoldFractions.otf" />
+    <Content Include="Assests\Fonts\matrixbsc.ttf" />
+    <Content Include="Assests\Fonts\MatrixExtraBold.ttf" />
+    <Content Include="Assests\Fonts\rog2_sans_serif_std_b_by_hammerbro101_dd8d7hb.otf" />
+    <Content Include="Assests\Fonts\SerifGothicStd.otf" />
+    <Content Include="Assests\Fonts\Stone Serif ITC Medium.ttf" />
+    <Content Include="Assests\Fonts\StoneSerifITCProBold.OTF" />
+    <Content Include="Assests\Fonts\StoneSerifITCProBoldIt.OTF" />
+    <Content Include="Assests\Fonts\StoneSerifITCProMedium.OTF" />
+    <Content Include="Assests\Fonts\StoneSerifITCProMediumIt.OTF" />
+    <Content Include="Assests\Fonts\StoneSerifITCProSemiBd.OTF" />
+    <Content Include="Assests\Fonts\StoneSerifITCProSemiBdIt.OTF" />
+    <Content Include="Assests\Fonts\StoneSerifSemSCITCTTSemi.ttf" />
+    <Content Include="Assests\Fonts\ufonts.com_matrix-book.ttf" />
+    <Content Include="Assests\Fonts\ufonts.com_matrixboldsmallcaps.ttf" />
+    <Content Include="Assests\Fonts\Yu-Gi-Oh! ITC Stone Serif Small Caps Bold.ttf" />
+    <Content Include="Assests\Fonts\YuGothB.ttc" />
+    <Content Include="Assests\Fonts\YuGothL.ttc" />
+    <Content Include="Assests\Fonts\YuGothM.ttc" />
+    <Content Include="Assests\Fonts\YuGothR.ttc" />
+    <Content Include="Assests\frames\Effect.png" />
+    <Content Include="Assests\frames\Fusion.png" />
+    <Content Include="Assests\frames\Normal.png" />
+    <Content Include="Assests\frames\Ritual.png" />
+    <Content Include="Assests\frames\Spell.png" />
+    <Content Include="Assests\frames\Synchro.png" />
+    <Content Include="Assests\frames\Trap.png" />
+    <Content Include="Assests\frames\Xyz.png" />
+    <Content Include="Assests\Level\LV 1.png" />
+    <Content Include="Assests\Level\LV 10.png" />
+    <Content Include="Assests\Level\LV 11.png" />
+    <Content Include="Assests\Level\LV 12.png" />
+    <Content Include="Assests\Level\LV 13.png" />
+    <Content Include="Assests\Level\LV 2.png" />
+    <Content Include="Assests\Level\LV 3.png" />
+    <Content Include="Assests\Level\LV 4.png" />
+    <Content Include="Assests\Level\LV 5.png" />
+    <Content Include="Assests\Level\LV 6.png" />
+    <Content Include="Assests\Level\LV 7.png" />
+    <Content Include="Assests\Level\LV 8.png" />
+    <Content Include="Assests\Level\LV 9.png" />
+    <Content Include="Assests\Level\Rk 1.png" />
+    <Content Include="Assests\Level\Rk 10.png" />
+    <Content Include="Assests\Level\Rk 11.png" />
+    <Content Include="Assests\Level\Rk 12.png" />
+    <Content Include="Assests\Level\Rk 13.png" />
+    <Content Include="Assests\Level\Rk 2.png" />
+    <Content Include="Assests\Level\Rk 3.png" />
+    <Content Include="Assests\Level\Rk 4.png" />
+    <Content Include="Assests\Level\Rk 5.png" />
+    <Content Include="Assests\Level\Rk 6.png" />
+    <Content Include="Assests\Level\Rk 8.png" />
+    <Content Include="Assests\Level\Rk 9.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
        Visual Studio and specify your pre- and post-build commands in
