@@ -4,7 +4,7 @@ from pathlib import Path
 # === Base Asset Directory ===
 BASE_DIR = Path("F:/YGOPro/pics/templates/PythonCardMaker/Series 3")
 ASSETS = {
-    "frame": BASE_DIR / "frames" / "Normal.png",
+    "frame": BASE_DIR / "frames" / "Spell.png",
     "attribute": BASE_DIR / "Attributes" / "Light.png",
     "level_star": BASE_DIR / "Level" / "LV 8.png",
     "font_name": BASE_DIR / "Fonts" / "911Fonts.com_MatrixRegularSmallCapsRegular__-_911fonts.com_fonts_owRo.ttf"
@@ -142,51 +142,82 @@ def draw_def_value(image, value, font_path, box=(575, 1091, 660, 1170), font_siz
 
     draw.text((x, y), text, font=font, fill="black")
     
-def draw_description(image, text, base_dir, frame_name, type_box, desc_box_right=660, font_size=32, line_spacing=4):
+def draw_description(image, text, base_dir, frame_name, type_box=None, desc_box_right=660, font_size=32, line_spacing=4):
+    from PIL import ImageFont, ImageDraw
+
     # === Font Selection ===
-    if "Normal" in frame_name:
-        font_path = base_dir / "Fonts" / "Stone Serif ITC Medium.ttf"
+    normal_font = base_dir / "Fonts" / "Stone Serif ITC Medium.ttf"
+    effect_font = base_dir / "Fonts" / "Matrix Book.ttf"
+    font_path = normal_font if "Normal" in frame_name else effect_font
+
+    # === Default Coordinates if type_box is None ===
+    if type_box:
+        base_x = type_box[0]
+        base_y = type_box[1]
     else:
-        font_path = base_dir / "Fonts" / "Matrix Book.ttf"
-    font = ImageFont.truetype(str(font_path), font_size)
+        base_x = 85
+        base_y = 925
 
-    # === Determine Vertical Start ===
-    if "Spell" in frame_name or "Trap" in frame_name:
-        y = type_box[1]
-    else:
-        y = type_box[1] + 15  
+    # === Spell/Trap Adjustments ===
+    is_spell_or_trap = "Spell" in frame_name or "Trap" in frame_name
+    y_start = base_y - 10 if is_spell_or_trap else base_y + 15
+    bottom_limit = 1075 + 70 if is_spell_or_trap else 1075
 
-    x = type_box[0]
-    max_width = desc_box_right - x
-    max_height = 400  # <-- this is the new "roof" (adjust as needed)
-
+    x = base_x
+    max_width = (desc_box_right - 15) - x
     draw = ImageDraw.Draw(image)
 
-    # === Word Wrap ===
-    words = text.split()
-    lines = []
-    current_line = ""
-    for word in words:
-        test_line = f"{current_line} {word}".strip()
-        width = draw.textlength(test_line, font=font)
-        if width <= max_width:
-            current_line = test_line
+    # === Normalize Text ===
+    paragraphs = text.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+
+    # === Font Shrinking Loop ===
+    current_font_size = font_size
+    best_fit_font = None
+    best_fit_lines = []
+
+    while current_font_size >= 12:
+        font = ImageFont.truetype(str(font_path), current_font_size)
+        lines = []
+        y = y_start
+        fits = True
+
+        for paragraph in paragraphs:
+            words = paragraph.split()
+            current_line = ""
+            for word in words:
+                test_line = f"{current_line} {word}".strip()
+                width = draw.textlength(test_line, font=font)
+                if width <= max_width:
+                    current_line = test_line
+                else:
+                    lines.append(current_line)
+                    y += current_font_size + line_spacing
+                    if y + current_font_size > bottom_limit:
+                        fits = False
+                        break
+                    current_line = word
+            if not fits:
+                break
+            if current_line:
+                lines.append(current_line)
+                y += current_font_size + line_spacing
+                if y + current_font_size > bottom_limit:
+                    fits = False
+                    break
+
+        if fits:
+            best_fit_font = font
+            best_fit_lines = lines
+            break
         else:
-            lines.append(current_line)
-            current_line = word
-    if current_line:
-        lines.append(current_line)
+            current_font_size -= 1
 
-    # === Draw Each Line (within vertical limits) ===
-    for line in lines:
-        if y + font_size > type_box[1] + max_height:
-            break  # Stop if we exceed roof
-        draw.text((x, y), line, font=font, fill="black")
-        y += font_size + line_spacing
+    # === Final Render Pass ===
+    y = y_start
+    for line in best_fit_lines:
+        draw.text((x, y), line, font=best_fit_font, fill="black")
+        y += best_fit_font.size + line_spacing
 
-
-
-# === Place Artwork from /art Folder ===
 def place_card_art(image, base_dir, top_left=(115, 258), bottom_right=(696, 845)):
     art_dir = base_dir / "art"
     for file in art_dir.iterdir():
@@ -218,25 +249,28 @@ render_and_paste_card_name(
 place_card_art(card, BASE_DIR)
 
 # === Draw Type Line ===
-type_text = "Dragon"
-type_font = BASE_DIR / "Fonts" / "Yu-Gi-Oh! ITC Stone Serif Small Caps Bold.ttf"
-type_box = (85, 925, 640, 940)
-draw_card_type(
-    card,
-    type_text,
-    type_font,
-    box=type_box,
-    font_size=32,
-    y_offset=5
-)
+#type_text = "Dragon"
+#type_font = BASE_DIR / "Fonts" / "Yu-Gi-Oh! ITC Stone Serif Small Caps Bold.ttf"
+#type_box = (85, 925, 640, 940)
+#draw_card_type(
+#    card,
+#    type_text,
+#    type_font,
+#    box=type_box,
+#    font_size=32,
+#    y_offset=5
+#)
 
-desc_text = "This legendary dragon is a powerful engine of destruction. Virtually invincible, very few have faced this awesome creature and lived to tell the tale."
+# === Load Description from File (as a flat string) ===
+desc_file = BASE_DIR / "temp" / "desc.txt"
+with open(desc_file, encoding="utf-8") as f:
+    desc_text = f.read().strip()  # Don't split or transform into a list
+
 draw_description(
     card,
     desc_text,
     BASE_DIR,
-    frame_name=ASSETS["frame"].name,  # Dynamically pulled from ASSETS
-    type_box=type_box,
+    frame_name=ASSETS["frame"].name,
     desc_box_right=750,
     font_size=26,
     line_spacing=4
@@ -245,17 +279,16 @@ draw_description(
 
 
 # === Draw ATK Value ===
-atk_value = 3000
-atk_font = BASE_DIR / "Fonts" / "MatrixSmallCaps-Bold.otf"
-atk_box = (475, 1091, 560, 117)
-draw_atk_value(card, atk_value, atk_font, box=atk_box, font_size=35)
+#atk_value = 3000
+#atk_font = BASE_DIR / "Fonts" / "MatrixSmallCaps-Bold.otf"
+#atk_box = (475, 1091, 560, 117)
+#draw_atk_value(card, atk_value, atk_font, box=atk_box, font_size=35)
 
 # === Draw DEF Value ===
-def_value = 2500
-def_font = BASE_DIR / "Fonts" / "MatrixSmallCaps-Bold.otf"
-def_box = (640, 1091, 725, 1170)
-draw_def_value(card, def_value, def_font, box=def_box, font_size=35)
-
+#def_value = 2500
+#def_font = BASE_DIR / "Fonts" / "MatrixSmallCaps-Bold.otf"
+#def_box = (640, 1091, 725, 1170)
+#draw_def_value(card, def_value, def_font, box=def_box, font_size=35)
 
 # === Save and Show Result ===
 output_path = BASE_DIR / "test_card.png"
