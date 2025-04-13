@@ -77,6 +77,115 @@ def render_and_paste_card_name(image, text, font_path, box, base_font_size=140, 
     paste_y = box_bottom - name_img.height - 3 + y_offset
     image.paste(name_img, (paste_x, paste_y), name_img)
 
+# === Draw Card Type Field with Compression ===
+def draw_card_type(image, text, font_path, box=(85, 925, 640, 940), font_size=32, y_offset=0):
+    formatted_text = f"[{text}]"
+    font = ImageFont.truetype(str(font_path), font_size)
+
+    # Metrics and temporary image for text
+    ascent, descent = font.getmetrics()
+    draw_img = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    text_width = draw_img.textlength(formatted_text, font=font)
+    text_height = ascent + descent
+
+    temp_img = Image.new("RGBA", (int(text_width), text_height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(temp_img)
+    draw.text((0, 0), formatted_text, font=font, fill="black")
+
+    # Extract box dimensions
+    box_x, box_y, box_right, box_bottom = box
+    box_w = box_right - box_x
+
+    # === Compression Tier System ===
+    char_count = len(formatted_text)
+
+    if char_count > 20:
+        compression = 0.85  # Strong compression
+    elif char_count > 16:
+        compression = 0.87  # Light compression
+    else:
+        compression = 1.00  # No compression
+
+    # Apply compression if needed
+    if compression < 1.0:
+        new_width = int(temp_img.width * compression)
+        temp_img = temp_img.resize((new_width, temp_img.height), resample=Image.BICUBIC)
+
+    # Paste bottom-left aligned
+    paste_x = box_x
+    paste_y = box_bottom - temp_img.height + y_offset
+    image.paste(temp_img, (paste_x, paste_y), temp_img)
+    
+def draw_atk_value(image, value, font_path, box=(470, 984, 555, 1000), font_size=7.5):
+    font = ImageFont.truetype(str(font_path), int(font_size))
+    draw = ImageDraw.Draw(image)
+
+    text = str(value)
+    text_width = draw.textlength(text, font=font)
+
+    box_x, box_y, box_right, box_bottom = box
+    x = box_right - text_width  # Right-aligned
+    y = box_y  # Top aligned (adjust if needed)
+
+    draw.text((x, y), text, font=font, fill="black")
+
+def draw_def_value(image, value, font_path, box=(575, 1091, 660, 1170), font_size=35):
+    font = ImageFont.truetype(str(font_path), int(font_size))
+    draw = ImageDraw.Draw(image)
+
+    text = str(value)
+    text_width = draw.textlength(text, font=font)
+
+    box_x, box_y, box_right, box_bottom = box
+    x = box_right - text_width  # Right-aligned
+    y = box_y
+
+    draw.text((x, y), text, font=font, fill="black")
+    
+def draw_description(image, text, base_dir, frame_name, type_box, desc_box_right=660, font_size=32, line_spacing=4):
+    # === Font Selection ===
+    if "Normal" in frame_name:
+        font_path = base_dir / "Fonts" / "Stone Serif ITC Medium.ttf"
+    else:
+        font_path = base_dir / "Fonts" / "Matrix Book.ttf"
+    font = ImageFont.truetype(str(font_path), font_size)
+
+    # === Determine Vertical Start ===
+    if "Spell" in frame_name or "Trap" in frame_name:
+        y = type_box[1]
+    else:
+        y = type_box[1] + 15  
+
+    x = type_box[0]
+    max_width = desc_box_right - x
+    max_height = 400  # <-- this is the new "roof" (adjust as needed)
+
+    draw = ImageDraw.Draw(image)
+
+    # === Word Wrap ===
+    words = text.split()
+    lines = []
+    current_line = ""
+    for word in words:
+        test_line = f"{current_line} {word}".strip()
+        width = draw.textlength(test_line, font=font)
+        if width <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+
+    # === Draw Each Line (within vertical limits) ===
+    for line in lines:
+        if y + font_size > type_box[1] + max_height:
+            break  # Stop if we exceed roof
+        draw.text((x, y), line, font=font, fill="black")
+        y += font_size + line_spacing
+
+
+
 # === Place Artwork from /art Folder ===
 def place_card_art(image, base_dir, top_left=(115, 258), bottom_right=(696, 845)):
     art_dir = base_dir / "art"
@@ -95,10 +204,58 @@ def place_card_art(image, base_dir, top_left=(115, 258), bottom_right=(696, 845)
     image.paste(art, top_left, art)
 
 # === Apply Name and Artwork ===
-card_name = "D/D/D/D Super-Dimensional Sovereign Emperor Zero Paradox"
+card_name = "Blue-Eyes White Dragon"
 name_box = (84, 52, 652, 125)
-render_and_paste_card_name(card, card_name, ASSETS["font_name"], name_box, base_font_size=105, y_offset=18)
+render_and_paste_card_name(
+    card,
+    card_name,
+    ASSETS["font_name"],
+    name_box,
+    base_font_size=105,
+    y_offset=18
+)
+
 place_card_art(card, BASE_DIR)
+
+# === Draw Type Line ===
+type_text = "Dragon"
+type_font = BASE_DIR / "Fonts" / "Yu-Gi-Oh! ITC Stone Serif Small Caps Bold.ttf"
+type_box = (85, 925, 640, 940)
+draw_card_type(
+    card,
+    type_text,
+    type_font,
+    box=type_box,
+    font_size=32,
+    y_offset=5
+)
+
+desc_text = "This legendary dragon is a powerful engine of destruction. Virtually invincible, very few have faced this awesome creature and lived to tell the tale."
+draw_description(
+    card,
+    desc_text,
+    BASE_DIR,
+    frame_name=ASSETS["frame"].name,  # Dynamically pulled from ASSETS
+    type_box=type_box,
+    desc_box_right=750,
+    font_size=26,
+    line_spacing=4
+)
+
+
+
+# === Draw ATK Value ===
+atk_value = 3000
+atk_font = BASE_DIR / "Fonts" / "MatrixSmallCaps-Bold.otf"
+atk_box = (475, 1091, 560, 117)
+draw_atk_value(card, atk_value, atk_font, box=atk_box, font_size=35)
+
+# === Draw DEF Value ===
+def_value = 2500
+def_font = BASE_DIR / "Fonts" / "MatrixSmallCaps-Bold.otf"
+def_box = (640, 1091, 725, 1170)
+draw_def_value(card, def_value, def_font, box=def_box, font_size=35)
+
 
 # === Save and Show Result ===
 output_path = BASE_DIR / "test_card.png"
