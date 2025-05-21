@@ -147,7 +147,7 @@ def set_layout_constants(SeriesNum):
         
         DESC_BOX_MONSTER_TOP_LEFT = (80, 930)
         DESC_BOX_BOTTOM_RIGHT_MONSTER = (745, 1069)
-        DESC_BOX_BOTTOM_RIGHT_SPELL_TRAP = (745, 1115)
+        DESC_BOX_BOTTOM_RIGHT_SPELL_TRAP = (745, 1110)
         DESC_BOX_SPELL_TRAP_TOP_LEFT = (80, 895)
         DESC_BOX_MONSTER_Y_OFFSET = 0
         DESC_BOX_SPELL_TRAP_Y_OFFSET = 0
@@ -194,7 +194,7 @@ def set_layout_constants(SeriesNum):
         
         DESC_BOX_MONSTER_TOP_LEFT = (65, 922)
         DESC_BOX_BOTTOM_RIGHT_MONSTER = (763, 1069)
-        DESC_BOX_BOTTOM_RIGHT_SPELL_TRAP = (763, 1115)
+        DESC_BOX_BOTTOM_RIGHT_SPELL_TRAP = (763, 1110)
         DESC_BOX_SPELL_TRAP_TOP_LEFT = (65, 890)
         DESC_BOX_MONSTER_Y_OFFSET = 0
         DESC_BOX_SPELL_TRAP_Y_OFFSET = 0
@@ -660,15 +660,17 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
     18874401, 16785441, 25165857, 25174113  # Added Z-Arc type ID here
     }   
     link_type_ids = {67108865, 67108897}
+    
+    # Determine if this is a pendulum card
+    is_pendulum = type_id in pendulum_type_ids or type_id == 25174113  # Include Z-Arc
 
     frame_override = (overrides or {}).get("frame")
     if frame_override:
         frame_file = Path(frame_override).name
     else:
+        # First, handle special frame types
         if type_id == 16401:
             frame_file = "Token.png"
-        #elif type_id == 8225:
-        #    frame_file = "Dark_Synchro.png"
         elif type_id == 102:
             frame_file = "Legendary_Dragon.png"
         elif type_id == 103:
@@ -686,21 +688,25 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
         elif type_id == 109:
             frame_file = "Uria.png"    
         elif type_id == 25174113:
-            frame_file = "Z-Arc.png"
+            # Z-Arc is now treated like other pendulum cards (use base frame)
+            frame_file = "Fusion.png"  # Z-Arc is fusion-based
         elif type_id in link_type_ids:
             frame_file = "Link.png"
-        elif type_id == 16777313:
-            frame_file = "Pen_Fusion.png"
-        elif type_id == 16777377:
-            frame_file = "Pen_Ritual.png"
-        elif type_id == 16785441:
-            frame_file = "Pen_Synchro.png"
-        elif type_id == 25165857:
-            frame_file = "Pen_Xyz.png"
-        elif type_id == 16777233:
-            frame_file = "Pen_Normal.png"
-        elif type_id in {16781345, 16777761, 18874401, 16777249, 50331681, 16781329}:
-            frame_file = "Pen_Effect.png"
+        # For pendulum cards, determine the base frame type (ignoring pendulum status)
+        elif is_pendulum:
+            if "fusion" in frame_type:
+                frame_file = "Fusion.png"
+            elif "ritual" in frame_type:
+                frame_file = "Ritual.png"
+            elif "synchro" in frame_type:
+                frame_file = "Synchro.png"
+            elif "xyz" in frame_type:
+                frame_file = "Xyz.png"
+            elif "effect" in frame_type:
+                frame_file = "Effect.png"
+            else:
+                frame_file = "Normal.png"
+        # For all other cards
         elif category == "monster":
             if "fusion" in frame_type:
                 frame_file = "Fusion.png"
@@ -782,7 +788,6 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
     else:
         name_font_color = "white" if category in ("spell", "trap") or "xyz" in frame_type or "link" in frame_type else "black"
 
-
     TEXT_FIELDS = {
         "name": {
             "top_left": CARD_NAME_BOX_TOP_LEFT,
@@ -846,15 +851,31 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
 
     # Place artwork with alias support
     artwork_placed = False
-    if type_id in pendulum_type_ids or frame_file.lower() == "z-arc.png":
+    if is_pendulum:
         artwork_placed = place_card_art(card, card_info["passcode"], ART_TOP_LEFT_PENDULUM, ART_BOTTOM_RIGHT_PENDULUM, overrides=overrides, alias=card_info.get("alias", 0))
     else:
         artwork_placed = place_card_art(card, card_info["passcode"], ART_TOP_LEFT_REGULAR, ART_BOTTOM_RIGHT_REGULAR, overrides=overrides, alias=card_info.get("alias", 0))
     
     # Skip rendering if artwork couldn't be placed
     if not artwork_placed:
-        print(f"Skipping render for {card_info['passcode']} due to missing artwork.")
-        return False
+        # Special exception for GUI-created cards (passcode = "created")
+        if card_info["passcode"] == "created":
+            print(f"Continuing without artwork for GUI-created card")
+        else:
+            print(f"Skipping render for {card_info['passcode']} due to missing artwork.")
+            return False
+
+    # After artwork is placed, overlay pendulum frame if needed
+    if is_pendulum:
+        # Use a single pendulum overlay for all pendulum cards
+        pendulum_overlay_path = base_dir / "frames" / "Pen.png"
+        
+        # Apply the pendulum overlay if it exists
+        if pendulum_overlay_path.exists():
+            pendulum_overlay = Image.open(pendulum_overlay_path).convert("RGBA")
+            card.paste(pendulum_overlay, (0, 0), pendulum_overlay)
+        else:
+            print(f"[Missing Overlay] Pendulum overlay not found at {pendulum_overlay_path}")
 
     # Link arrows and rating
     if type_id in link_type_ids:
@@ -879,7 +900,8 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
         type_box=TEXT_FIELDS["type"]["top_left"] if not is_spell_or_trap else None
     )
 
-    if type_id in pendulum_type_ids or frame_file.lower() == "z-arc.png":
+    # Draw pendulum effects and scales after everything else
+    if is_pendulum:
         if card_info.get("pendulum_effect"):
             draw_pendulum_effect(card, card_info["pendulum_effect"], base_dir)
         if card_info.get("scale_left") is not None and card_info.get("scale_right") is not None:
@@ -1938,6 +1960,13 @@ def create_card_form_interface(base_dir):
     root = tk.Tk()
     root.title("Yu-Gi-Oh! Card Creator")
     
+    # Pendulum flag - MOVED HERE after creating root window
+    is_pendulum = tk.BooleanVar(value=False)
+    
+    # Get screen dimensions to set window size optimally for 1080p displays
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    
     # Get screen dimensions to set window size optimally for 1080p displays
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -2011,10 +2040,11 @@ def create_card_form_interface(base_dir):
     frame_var = tk.StringVar()
     type_id_var = tk.IntVar(value=33)  # Default to Effect monster
     
-    # Get frame files
+    # Get frame files but filter out all Pen_* frames (we'll use overlay instead)
     frame_files = []
     try:
-        frame_files = [f for f in os.listdir(base_dir / "frames") if f.endswith(".png")]
+        frame_files = [f for f in os.listdir(base_dir / "frames") 
+                      if f.endswith(".png") and not f.startswith("Pen_")]
     except Exception as e:
         print(f"Error loading frames: {e}")
     
@@ -2026,25 +2056,25 @@ def create_card_form_interface(base_dir):
     # Function to update card preview
     def update_preview(*args):
         nonlocal preview_image_ref, render_in_progress
-        
+    
         # Don't render if already in progress (debounce)
         if render_in_progress:
             return
-            
-        render_in_progress = True
         
+        render_in_progress = True
+    
         # Show "rendering" text
         preview_canvas.itemconfig(preview_text, text="Rendering preview...")
-        
+    
         # Get current values
         current_card_info = {
             "name": name_entry.get(),
-            "pendulum_effect": pendulum_text.get("1.0", tk.END).strip() if "Pen_" in frame_var.get() or frame_var.get() == "Z-Arc.png" else None,
+            "pendulum_effect": pendulum_text.get("1.0", tk.END).strip() if is_pendulum.get() else None,
             "description": desc_text.get("1.0", tk.END).strip(),
             "attribute": attribute_var.get(),
             "level": level_var.get(),
-            "scale_left": scale_var.get(),
-            "scale_right": scale_var.get(),
+            "scale_left": scale_var.get() if is_pendulum.get() else 0,
+            "scale_right": scale_var.get() if is_pendulum.get() else 0,
             "atk": atk_entry.get() or "0",
             "def": def_entry.get() or "0",
             "type_ability": type_entry.get(),
@@ -2053,7 +2083,25 @@ def create_card_form_interface(base_dir):
             "passcode": "preview",
             "type_id": type_id_var.get()
         }
-        
+    
+        # Set appropriate type_id for pendulum cards
+        if is_pendulum.get() and current_card_info["category"] == "monster":
+            # Map base type to pendulum type ID
+            if "Normal" in frame_var.get():
+                current_card_info["type_id"] = 16777233  # Pendulum Normal
+            elif "Effect" in frame_var.get():
+                current_card_info["type_id"] = 16777249  # Pendulum Effect
+            elif "Fusion" in frame_var.get():
+                current_card_info["type_id"] = 16777313  # Pendulum Fusion
+            elif "Ritual" in frame_var.get():
+                current_card_info["type_id"] = 16777377  # Pendulum Ritual
+            elif "Synchro" in frame_var.get():
+                current_card_info["type_id"] = 16785441  # Pendulum Synchro
+            elif "Xyz" in frame_var.get():
+                current_card_info["type_id"] = 25165857  # Pendulum Xyz
+            elif "Z-Arc" in frame_var.get():
+                current_card_info["type_id"] = 25174113  # Z-Arc
+    
         # Calculate Link DEF value from checkboxes if needed
         if "Link" in frame_var.get():
             link_def_value = 0
@@ -2061,30 +2109,33 @@ def create_card_form_interface(base_dir):
                 if link_vars[marker].get():
                     link_def_value += bit_value
             current_card_info["def"] = str(link_def_value)
-        
+    
         # Create overrides dictionary
         overrides = {}
         if artwork_path:
             overrides["artwork"] = artwork_path
-            
+        else:
+            # Allow cards without artwork in the GUI
+            overrides["allow_no_artwork"] = True
+        
         # Create a temporary image file path
         temp_dir = Path(os.environ.get('TEMP', '.'))
         temp_file = temp_dir / "card_preview.png"
-        
+    
         # Function to render in background thread
         def render_task():
             nonlocal preview_image_ref, render_in_progress
             try:
                 # Create a temporary image file
                 draw_card_image(current_card_info, base_dir, temp_dir, overrides=overrides)
-                
+            
                 # Load and display the preview
                 if temp_file.exists():
                     img = Image.open(temp_file)
                     # Scale to fit preview canvas
                     img = img.resize((419, 610), Image.LANCZOS)
                     preview_img = ImageTk.PhotoImage(img)
-                    
+                
                     # Update on main thread
                     root.after(0, lambda: update_preview_image(preview_img))
             except Exception as e:
@@ -2096,19 +2147,31 @@ def create_card_form_interface(base_dir):
                 ))
             finally:
                 render_in_progress = False
-        
+    
         # Function to update preview image on main thread
         def update_preview_image(img):
             nonlocal preview_image_ref
             preview_image_ref = img  # Keep reference
             preview_canvas.delete("all")  # Clear canvas
             preview_canvas.create_image(210, 305, image=preview_image_ref)
-        
+    
         # Start render thread
         thread = threading.Thread(target=render_task)
         thread.daemon = True
         thread.start()
     
+    def toggle_pendulum_mode():
+        """Toggles pendulum mode on/off and shows/hides pendulum section"""
+        if is_pendulum.get():
+            # Show pendulum section
+            pendulum_section.pack(fill=tk.X, padx=10, pady=5, ipady=5, after=pendulum_toggle)
+        else:
+            # Hide pendulum section
+            pendulum_section.pack_forget()
+    
+        # Update preview to reflect pendulum change
+        update_preview()
+
     def select_frame(frame_file):
         frame_var.set(frame_file)
         print(f"Frame selected: {frame_file}")  # Debug output
@@ -2116,11 +2179,14 @@ def create_card_form_interface(base_dir):
         # Update type_id based on frame
         if frame_file in frame_type_id_map:
             type_id_var.set(frame_type_id_map[frame_file])
-    
+
         # Special handling for Z-Arc.png
         if frame_file == "Z-Arc.png":
-            type_id_var.set(110)  # Z-Arc's specific type ID
-            print("Z-Arc frame selected - using specific Z-Arc type ID")
+            type_id_var.set(25174113)  # Z-Arc's specific type ID
+            print("Z-Arc frame selected - using Z-Arc type ID")
+            # Auto-enable pendulum for Z-Arc
+            is_pendulum.set(True)
+            toggle_pendulum_mode()  # Show pendulum section
 
         # Get selected frame image for thumbnail
         try:
@@ -2145,17 +2211,22 @@ def create_card_form_interface(base_dir):
         is_spell = frame_file == "Spell.png"
         is_trap = frame_file == "Trap.png"
         is_link = "Link" in frame_file
-        is_pendulum = "Pen_" in frame_file or frame_file == "Z-Arc.png"
-
-        print(f"Frame type: Spell={is_spell}, Trap={is_trap}, Link={is_link}, Pendulum={is_pendulum}")  # Debug
+    
+        print(f"Frame type: Spell={is_spell}, Trap={is_trap}, Link={is_link}")  # Debug
 
         # Show type section first (needed for all cards)
         type_section.pack(fill=tk.X, padx=10, pady=5, ipady=5)
     
-        # Handle Pendulum cards
-        if is_pendulum:
-            print("Showing pendulum section")  # Debug
-            pendulum_section.pack(fill=tk.X, padx=10, pady=5, ipady=5, after=type_section)
+        # Always show pendulum toggle for monster cards
+        if not is_spell and not is_trap:
+            pendulum_toggle.pack(fill=tk.X, padx=10, pady=5, after=type_section)
+            # Show pendulum section if enabled
+            if is_pendulum.get():
+                pendulum_section.pack(fill=tk.X, padx=10, pady=5, ipady=5, after=pendulum_toggle)
+        else:
+            # Disable pendulum for Spell/Trap
+            is_pendulum.set(False)
+            pendulum_toggle.pack_forget()
 
         # Handle Spell/Trap cards
         if is_spell or is_trap:
@@ -2163,19 +2234,19 @@ def create_card_form_interface(base_dir):
             # Clear current card type field and set appropriate default
             type_entry.delete(0, tk.END)
             type_entry.insert(0, "Spell Card" if is_spell else "Trap Card")
-        
+    
             # Set attribute to SPELL or TRAP automatically
             attribute_var.set("SPELL" if is_spell else "TRAP")
-        
+    
             # Clear ATK/DEF values - these shouldn't be used for Spell/Trap
             atk_entry.delete(0, tk.END)
             atk_entry.insert(0, "")
             def_entry.delete(0, tk.END)
             def_entry.insert(0, "")
-    
+
             # Show banner section
             banner_section.pack(fill=tk.X, padx=10, pady=5, ipady=5, after=type_section)
-    
+
             # Pre-select appropriate banner options
             banner_var.set("NO ICON")  # Default
             for banner_file in banner_files:
@@ -2188,8 +2259,8 @@ def create_card_form_interface(base_dir):
         else:
             # For monster cards
             print("Showing monster sections")  # Debug
-            attribute_section.pack(fill=tk.X, padx=10, pady=5, ipady=5, after=type_section)
-    
+            attribute_section.pack(fill=tk.X, padx=10, pady=5, ipady=5, after=pendulum_toggle if is_pendulum.get() else type_section)
+
             if is_link:
                 print("Showing link section")  # Debug
                 link_section.pack(fill=tk.X, padx=10, pady=5, ipady=5, after=attribute_section)
@@ -2198,10 +2269,10 @@ def create_card_form_interface(base_dir):
             else:
                 print("Showing level section")  # Debug
                 level_section.pack(fill=tk.X, padx=10, pady=5, ipady=5, after=attribute_section)
-    
+
             # Always show ATK/DEF for monsters
             atk_def_section.pack(fill=tk.X, padx=10, pady=5, ipady=5, after=link_section if is_link else level_section)
-        
+    
             # Reset default ATK/DEF for monsters if they were previously cleared
             if not atk_entry.get():
                 atk_entry.insert(0, "0")
@@ -2257,50 +2328,50 @@ def create_card_form_interface(base_dir):
     # ========== 3. ARTWORK (appears in center of card) ==========
     artwork_section = ttk.LabelFrame(scrollable_frame, text="Card Artwork")
     artwork_section.pack(fill=tk.X, padx=10, pady=5, ipady=5)
-    
+
     artwork_frame = ttk.Frame(artwork_section)
     artwork_frame.pack(fill=tk.X, padx=10, pady=5)
-    
+
+    artwork_path = None
+    art_image = None
+    art_photo = None
+
     def select_artwork():
         nonlocal artwork_path, art_image, art_photo
         file_path = filedialog.askopenfilename(
             title="Select Card Artwork",
             filetypes=[("Image Files", "*.png *.jpg *.jpeg")]
         )
-        
         if file_path:
             artwork_path = file_path
+            art_path_label.config(text=os.path.basename(file_path))
             try:
-                # Load and resize artwork for preview
                 art_image = Image.open(file_path)
                 art_image = art_image.resize((150, 150), Image.LANCZOS)
                 art_photo = ImageTk.PhotoImage(art_image)
-                
-                # Update preview
                 art_preview_label.config(image=art_photo, text="")
-                art_preview_label.image = art_photo  # Keep reference
-                
-                # Update filepath display
-                art_path_label.config(text=os.path.basename(file_path))
-                
-                # Update card preview
-                update_preview()
+                art_preview_label.image = art_photo
             except Exception as e:
                 print(f"Error loading artwork: {e}")
-    
-    ttk.Button(artwork_frame, text="Select Artwork...", command=select_artwork).pack(side=tk.LEFT, padx=10)
-    
-    # Display selected file path
+        else:
+            artwork_path = None
+            art_path_label.config(text="No artwork selected")
+            art_preview_label.config(image="", text="No artwork")
+            art_preview_label.image = None
+        update_preview()
+
+    # Select Artwork button
+    select_artwork_button = ttk.Button(artwork_frame, text="Select Artwork...", command=select_artwork)
+    select_artwork_button.pack(side=tk.LEFT, padx=10)
+
+    # File path display
     art_path_label = ttk.Label(artwork_frame, text="No artwork selected")
     art_path_label.pack(side=tk.LEFT, padx=10)
-    
-    # Preview thumbnail
+
+    # Thumbnail preview
     art_preview_label = ttk.Label(artwork_frame, text="No artwork")
     art_preview_label.pack(side=tk.RIGHT, padx=10)
-    
-    # Artwork thumbnail
-    art_image = None
-    art_photo = None
+
     
     # ========== 4. ATTRIBUTE (appears on top right of monster cards) ==========
     attribute_section = ttk.LabelFrame(scrollable_frame, text="Attribute")
@@ -2376,19 +2447,14 @@ def create_card_form_interface(base_dir):
     # ========== 6. PENDULUM SCALE (for pendulum cards) ==========
     pendulum_section = ttk.LabelFrame(scrollable_frame, text="Pendulum")
     # Initially hidden, will show when Pendulum frame is selected
-    
     pendulum_frame = ttk.Frame(pendulum_section)
     pendulum_frame.pack(fill=tk.X, padx=10, pady=10)
-    
     scale_var = tk.IntVar(value=8)
     scale_var.trace_add("write", update_preview)
-    
     ttk.Label(pendulum_frame, text="Pendulum Scale:", font=("Arial", 12)).pack(side=tk.LEFT, padx=20, pady=10)
-    
     # Create buttons for each scale 0-13 with better spacing
     scale_grid = ttk.Frame(pendulum_frame)
     scale_grid.pack(side=tk.LEFT, padx=5, pady=5)
-    
     for i in range(0, 14):  # Scales 0-13
         ttk.Radiobutton(
             scale_grid,
@@ -2397,22 +2463,30 @@ def create_card_form_interface(base_dir):
             value=i,
             width=3
         ).grid(row=0, column=i, padx=3, pady=3)
-    
     # ========== 7. TYPE LINE (appears below art on monster cards) ==========
     type_section = ttk.LabelFrame(scrollable_frame, text="Card Type")
     type_section.pack(fill=tk.X, padx=10, pady=5, ipady=5)
-    
     type_frame = ttk.Frame(type_section)
     type_frame.pack(fill=tk.X, padx=10, pady=10)
-    
     ttk.Label(type_frame, text="Type Line:").pack(side=tk.LEFT, padx=5)
     type_entry = ttk.Entry(type_frame, width=50)
     type_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
-    
     ttk.Label(type_frame, text="(e.g. 'Dragon / Effect')").pack(side=tk.RIGHT, padx=5)
-    
     # Add trace to update preview
     type_entry.bind("<KeyRelease>", lambda e: root.after(1000, update_preview))
+
+    # Add pendulum checkbox
+    pendulum_toggle = ttk.Frame(scrollable_frame)
+    # Don't pack it yet - it gets packed/unpacked in select_frame()
+
+    # Create pendulum checkbox
+    pendulum_check = ttk.Checkbutton(
+        pendulum_toggle,
+        text="Pendulum Card",
+        variable=is_pendulum,
+        command=lambda: toggle_pendulum_mode()
+    )
+    pendulum_check.pack(side=tk.LEFT, padx=10)
     
     # ========== 8. DESCRIPTION (appears below type line) ==========
     text_section = ttk.LabelFrame(scrollable_frame, text="Card Effects")
@@ -2678,60 +2752,73 @@ def create_card_form_interface(base_dir):
     
     def submit_form():
         nonlocal card_info
-    
+
         # Calculate Link DEF value from checkboxes if needed
         link_def_value = 0
         if "Link" in frame_var.get():
             for marker, (bit_value, _, _) in link_markers.items():
                 if link_vars[marker].get():
                     link_def_value += bit_value
-    
+
         # Basic info
         card_info["name"] = name_entry.get()
         card_info["type_ability"] = type_entry.get()
-    
+
         # Frame and Type
         selected_frame = frame_var.get()
         card_info["type_id"] = type_id_var.get()
-    
+
         # Special handling for Z-Arc.png
         if selected_frame == "Z-Arc.png":
-            card_info["type_id"] = 110  # Z-Arc's specific type ID
-    
+            card_info["type_id"] = 25174113  # Z-Arc's specific type ID
+
         # Set category based on frame
         is_spell = "Spell" in selected_frame
         is_trap = "Trap" in selected_frame
-    
+
+        # Set appropriate type_id for pendulum cards
+        if is_pendulum.get() and not is_spell and not is_trap:
+            if "Normal" in selected_frame:
+                card_info["type_id"] = 16777233  # Pendulum Normal
+            elif "Effect" in selected_frame:
+                card_info["type_id"] = 16777249  # Pendulum Effect
+            elif "Fusion" in selected_frame:
+                card_info["type_id"] = 16777313  # Pendulum Fusion
+            elif "Ritual" in selected_frame:
+                card_info["type_id"] = 16777377  # Pendulum Ritual
+            elif "Synchro" in selected_frame:
+                card_info["type_id"] = 16785441  # Pendulum Synchro
+            elif "Xyz" in selected_frame:
+                card_info["type_id"] = 25165857  # Pendulum Xyz
+
         if is_spell:
             card_info["category"] = "spell"
             card_info["attribute"] = "Spell"
-            card_info["def"] = "0"  # Set to zero but won't be displayed
-            card_info["atk"] = "0"  # Set to zero but won't be displayed
+            card_info["def"] = "0"
+            card_info["atk"] = "0"
             card_info["sf"] = banner_var.get()
-            card_info["level"] = 0  # No level for Spell cards
+            card_info["level"] = 0
         elif is_trap:
             card_info["category"] = "trap"
-            card_info["attribute"] = "Trap" 
-            card_info["def"] = "0"  # Set to zero but won't be displayed
-            card_info["atk"] = "0"  # Set to zero but won't be displayed
+            card_info["attribute"] = "Trap"
+            card_info["def"] = "0"
+            card_info["atk"] = "0"
             card_info["sf"] = banner_var.get()
-            card_info["level"] = 0  # No level for Trap cards
+            card_info["level"] = 0
         else:
             card_info["category"] = "monster"
             card_info["attribute"] = attribute_var.get()
-        
-            # Link monsters use link_def_value
             if "Link" in selected_frame:
                 card_info["def"] = str(link_def_value)
-                card_info["level"] = 0  # Links don't have levels
+                card_info["level"] = 0
                 card_info["atk"] = atk_entry.get() or "0"
             else:
                 card_info["atk"] = atk_entry.get() or "0"
                 card_info["def"] = def_entry.get() or "0"
                 card_info["level"] = level_var.get()
-    
-        # Pendulum scales
-        if "Pen_" in selected_frame or selected_frame == "Z-Arc.png":
+
+        # Pendulum scales and effect
+        if is_pendulum.get() and not is_spell and not is_trap:
             card_info["scale_left"] = scale_var.get()
             card_info["scale_right"] = scale_var.get()
             card_info["pendulum_effect"] = pendulum_text.get("1.0", tk.END).strip()
@@ -2739,24 +2826,22 @@ def create_card_form_interface(base_dir):
             card_info["scale_left"] = 0
             card_info["scale_right"] = 0
             card_info["pendulum_effect"] = None
-    
-        # Text
+
+        # Description
         card_info["description"] = desc_text.get("1.0", tk.END).strip()
-    
-        # Create overrides dictionary
+
+        # Overrides
         overrides = {}
         if artwork_path:
             overrides["artwork"] = artwork_path
-    
-        # Always include the selected frame in overrides
+        overrides["allow_no_artwork"] = artwork_path is None
         overrides["frame"] = selected_frame
-    
-        # Store the final result
+
         root.result = {
             "card_info": card_info,
             "overrides": overrides
         }
-    
+
         root.destroy()
     
     # Create frame for buttons
