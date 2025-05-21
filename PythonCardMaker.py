@@ -275,26 +275,24 @@ def set_layout_constants(SeriesNum):
         PEND_DESC_BOTTOM_RIGHT = (590, 750)
 
     # Dump values for debugging
-    print("\n=== Layout Constants Dump ===")
-    for var in globals_to_clear:
-        print(f"{var}: {globals().get(var)}")
-    print("=" * 40)
-
+   # print("\n=== Layout Constants Dump ===")
+  #  for var in globals_to_clear:
+  #      print(f"{var}: {globals().get(var)}")
+  #  print("=" * 40)
+    
 SeriesNum="3"
 set_layout_constants(SeriesNum)
 #set_layout_constants(SeriesNum)
-
 safe_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.'-…()"
-
-
-
 # Path to the database file
 db_file_path = "F:/YGOPro/pics/templates/Automated templates/cards.cdb"
 # === Exclude specific card IDs from rendering ===
 excluded_ids = {
         #513000136, 513000134,513000135, 
-        170000152, 170000151,170000153, 170000201, 
-        10000000, 10000010, 10000020
+        #170000152, 170000151,170000153, 170000201, 
+        10000000, 10000010, 10000020,
+        #511000246,511000261,511000234,
+        #513000137,513000138,513000139
     }
 
 # download folder
@@ -331,7 +329,7 @@ FRAME_FILE_TO_TYPE_ID = {
         "Raviel.png": 107,
         "Hamon.png": 108,
         "Uria.png": 109,
-        "Z-Arc.png": 110
+        "Z-Arc.png": 25174113
     }
 
 database_paths = []
@@ -339,7 +337,6 @@ for directory in database_directories:
     for file in os.listdir(directory):
         if file.lower().endswith(".cdb") and "skill" not in file.lower():
             database_paths.append(os.path.join(directory, file))
-
 
 def launch_form_mode():
     import tkinter as tk
@@ -351,15 +348,12 @@ def launch_form_mode():
     BASE_DIR = Path("F:/YGOPro/pics/templates/PythonCardMaker/Series "+SeriesNum)
     OUTPUT_DIR = BASE_DIR
 
-
 # 💡 Dump the list of loaded databases
-print("Loaded the following databases:")
-for path in database_paths:
-    print(path)
-print("=" * 50)
+#print("Loaded the following databases:")
+#for path in database_paths:
+#    print(path)
+#print("=" * 50)
 
-# print(database_paths)
-# Attributes based on standard Yu-Gi-Oh attributes
 ATTRIBUTES = {
     0x1: "EARTH",
     0x2: "WATER",
@@ -397,7 +391,8 @@ MONSTER_RACES = {
     4194304: "Creator God",
     8388608: "Wyrm",
     16777216: "Cyberse",
-    33554432: "Illusion"
+    33554432: "Illusion",
+    102: "Legendary Dragon"
 }
 
 # Card types separated by category
@@ -449,7 +444,12 @@ Monster_CARD_TYPES = {
     25174113: "Fusion / Synchro / Xyz / Pendulum / Effect",
     103: "Normal",
     104: "Normal",
-    105: "Normal"
+    105: "Normal",
+    106: "Normal",
+    107: " Effect",
+    108: " Effect",
+    109: " Effect",
+    25174113: " Effect"
 
 }
 
@@ -460,6 +460,7 @@ Spell_CARD_TYPES = {
     262146: "Equip Spell ",
     130: "Ritual Spell",
     524290: "Field Spell ",
+    
 }
 
 Trap_CARD_TYPES = {
@@ -468,15 +469,14 @@ Trap_CARD_TYPES = {
     131076: "Continuous Trap "
 }
 
+Other_CARD_TYPES = {
+    102: "Legendary Dragon",
+    # You can add more special types here if needed
+}
+
 # Array to store unrecognized card types
 unrecognized_cards = []
 
-# Connect to the database
-#conn = sqlite3.connect(db_file_path)
-# = conn.cursor()
-
-# Function to clear the console
-# Function to determine the card category (Monster, Spell, Trap)
 def get_card_category(card_type):
     if card_type in Monster_CARD_TYPES:
         return "Monster", Monster_CARD_TYPES[card_type]
@@ -484,13 +484,12 @@ def get_card_category(card_type):
         return "Spell", Spell_CARD_TYPES[card_type]
     elif card_type in Trap_CARD_TYPES:
         return "Trap", Trap_CARD_TYPES[card_type]
+    elif card_type in Other_CARD_TYPES:
+        return "Other", Other_CARD_TYPES[card_type]
     else:
         return "Unknown", None
-
 # Function to process all records in the database
 # Prompt the user to enter the number of records they wish to access
-        
-
 
 SAFE_FONT_CHARS = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.'-…()[]\"“”‘’:;!? ")
 
@@ -656,10 +655,10 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
     type_id = card_info.get("type_id", 0)
 
     pendulum_type_ids = {
-        16777233, 16777249, 50331681, 16781329,
-        16777313, 16777377, 16781345, 16777761,
-        18874401, 16785441, 25165857
-    }
+    16777233, 16777249, 50331681, 16781329,
+    16777313, 16777377, 16781345, 16777761,
+    18874401, 16785441, 25165857, 25174113  # Added Z-Arc type ID here
+    }   
     link_type_ids = {67108865, 67108897}
 
     frame_override = (overrides or {}).get("frame")
@@ -679,6 +678,14 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
         elif type_id == 105:
             frame_file = "Slifer.png"
         elif type_id == 106:
+            frame_file = "Evil_god.png"
+        elif type_id == 107:
+            frame_file = "Raviel.png"
+        elif type_id == 108:
+            frame_file = "Hamon.png"
+        elif type_id == 109:
+            frame_file = "Uria.png"    
+        elif type_id == 25174113:
             frame_file = "Z-Arc.png"
         elif type_id in link_type_ids:
             frame_file = "Link.png"
@@ -768,9 +775,9 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
     desc_y_offset = DESC_BOX_SPELL_TRAP_Y_OFFSET if is_spell_or_trap else DESC_BOX_MONSTER_Y_OFFSET
     special_hex_color = "#f3c77a"
     special_hex_color2 = "#ac8a4e"
-    if frame_file in {"Obelisk.png", "Slifer.png"}:
+    if frame_file in {"Obelisk.png", "Slifer.png" ,"Uria.png","Raviel.png" }:
         name_font_color = special_hex_color
-    elif frame_file in {"Ra.png"}:
+    elif frame_file in {"Ra.png", "Hamon.png"}:
         name_font_color = special_hex_color2
     else:
         name_font_color = "white" if category in ("spell", "trap") or "xyz" in frame_type or "link" in frame_type else "black"
@@ -837,12 +844,17 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
         }
     }
 
-    # Place artwork
+    # Place artwork with alias support
+    artwork_placed = False
     if type_id in pendulum_type_ids or frame_file.lower() == "z-arc.png":
-        place_card_art(card, card_info["passcode"], ART_TOP_LEFT_PENDULUM, ART_BOTTOM_RIGHT_PENDULUM, overrides=overrides)
+        artwork_placed = place_card_art(card, card_info["passcode"], ART_TOP_LEFT_PENDULUM, ART_BOTTOM_RIGHT_PENDULUM, overrides=overrides, alias=card_info.get("alias", 0))
     else:
-        place_card_art(card, card_info["passcode"], ART_TOP_LEFT_REGULAR, ART_BOTTOM_RIGHT_REGULAR, overrides=overrides)
-
+        artwork_placed = place_card_art(card, card_info["passcode"], ART_TOP_LEFT_REGULAR, ART_BOTTOM_RIGHT_REGULAR, overrides=overrides, alias=card_info.get("alias", 0))
+    
+    # Skip rendering if artwork couldn't be placed
+    if not artwork_placed:
+        print(f"Skipping render for {card_info['passcode']} due to missing artwork.")
+        return False
 
     # Link arrows and rating
     if type_id in link_type_ids:
@@ -876,6 +888,7 @@ def draw_card_image(card_info, base_dir, save_dir=None, overrides=None):
     output_path = (save_dir or base_dir) / f"{card_info['passcode']}.png"
     card.save(output_path)
     print(f"✅ Card image saved to: {output_path}")
+    return True
 
 # === Render Name ===
 def render_and_paste_card_name(image, cfg):
@@ -903,7 +916,7 @@ def render_and_paste_card_name(image, cfg):
 
     # Strip unwanted suffixes
     text = cfg["text"].replace("\n", " ").replace("\r", " ").strip()
-    for suffix in ["(Anime)", "(Manga)", "(VG)", "(Pre-Errata)", "(GOAT)", "(DM)", "(TF3)","(TF6)"]:
+    for suffix in ["(Anime)", "(Manga)", "(VG)", "(Pre-Errata)", "(GOAT)", "(DM)", "(TF3)","(TF6)", "(GX)"]:
         if text.endswith(suffix):
             text = text[: -len(suffix)].strip()
 
@@ -966,7 +979,7 @@ def render_and_paste_card_name(image, cfg):
     paste_y = box_bottom - name_img.height - 3 + cfg["y_offset"]
     image.paste(name_img, (paste_x, paste_y), name_img)
     
-def place_card_art(image, passcode, top_left=ART_TOP_LEFT_REGULAR, bottom_right=ART_BOTTOM_RIGHT_REGULAR, overrides=None):
+def place_card_art(image, passcode, top_left=ART_TOP_LEFT_REGULAR, bottom_right=ART_BOTTOM_RIGHT_REGULAR, overrides=None, alias=None):
     from PIL import Image
     from pathlib import Path
 
@@ -980,20 +993,34 @@ def place_card_art(image, passcode, top_left=ART_TOP_LEFT_REGULAR, bottom_right=
         image.paste(art, top_left, art)
         return True
 
-    # Fallback: search by passcode in high-res directory
-    search_dir = Path("X:/Temps/YGOpro pic project/all high res pics")
-    passcode = str(passcode)
-    for ext in [".jpg", ".jpeg", ".png"]:
-        image_path = search_dir / f"{passcode}{ext}"
-        if image_path.exists():
-            art = Image.open(image_path).convert("RGBA")
-            width = bottom_right[0] - top_left[0]
-            height = bottom_right[1] - top_left[1]
-            art = art.resize((width, height))
-            image.paste(art, top_left, art)
+    # Function to try loading artwork for a given passcode
+    def try_load_artwork(code):
+        search_dir = Path("X:/Temps/YGOpro pic project/all high res pics")
+        code_str = str(code)
+        for ext in [".jpg", ".jpeg", ".png"]:
+            image_path = search_dir / f"{code_str}{ext}"
+            if image_path.exists():
+                art = Image.open(image_path).convert("RGBA")
+                width = bottom_right[0] - top_left[0]
+                height = bottom_right[1] - top_left[1]
+                art = art.resize((width, height))
+                image.paste(art, top_left, art)
+                return True
+        return False
+
+    # Try with original passcode first
+    if try_load_artwork(passcode):
+        return True
+    
+    # If alias is provided and original artwork not found, try with alias
+    if alias and alias != 0 and alias != passcode:
+        print(f"[Art Fallback] Trying alias {alias} for passcode {passcode}")
+        if try_load_artwork(alias):
+            print(f"[Art Found] Using artwork from alias {alias} for passcode {passcode}")
             return True
 
-    print(f"[Missing Art] Could not find artwork for passcode: {passcode}")
+    print(f"[Missing Art] Could not find artwork for passcode: {passcode}" + 
+          (f" or alias: {alias}" if alias and alias != 0 else ""))
     return False
 
 def draw_link_arrows(image, markers, base_dir):
@@ -1163,10 +1190,14 @@ def draw_card_type(image, cfg, debug=False):
     
     # Clean up text format
     text = cfg['text']
-    if " / Tuner / Effect" in text:
-        text = text.replace(" / Tuner / Effect", " / Tuner")
-    clean_text = text.replace(' / Normal', '').replace(' / ', '/')
-    formatted_text = f"[{clean_text}]"
+    
+    if "Legendary Dragon" in text or "OTHER CARD" in text.upper() or "OTHER" in text.upper():
+        formatted_text = "      "  # Always use this specific text for type 102
+    else:
+        if " / Tuner / Effect" in text:
+            text = text.replace(" / Tuner / Effect", " / Tuner")
+        clean_text = text.replace(' / Normal', '').replace(' / ', '/')
+        formatted_text = f"[{clean_text}]"
     
     # Get font and setup drawing context
     font = ImageFont.truetype(str(cfg["font_path"]), cfg["font_size"])
@@ -1231,7 +1262,7 @@ def draw_card_type(image, cfg, debug=False):
         red = (255, 0, 0, 255)
         for y in range(paste_y - 5, paste_y + text_height + 5):
             draw_debug.point((TYPE_LINE_X_ENDPOINT, y), fill=red)
-            draw_debug.point((end_x, y), fill=(0, 255, 0, 255))
+            draw_debug.point((end_x, y), fill=(0, 255, 0, 255)) 
             
 def draw_description(image, text, frame_name, cfg, type_box=None, debug=False):
     from PIL import ImageFont, ImageDraw
@@ -1471,11 +1502,14 @@ def prompt_for_frame(base_dir):
         "Pen_Xyz.png": 25165857,
         "Token.png": 16401,
         "Dark_Synchro.png": 8225,
-        "Legendary_Dragon": 102,
+        "Legendary_Dragon.png": 102,
         "Obelisk.png": 103,
         "Ra.png": 104,
-        "Slifer.png": 105,
-        "Z-Arc.png": 106
+        "Evil_god.png": 106,
+        "Raviel.png": 107,
+        "Hamon.png": 108,
+        "Uria.png": 109,
+        "Z-Arc.png": 25174113
     }
 
     frame_list = list(FRAME_FILE_TO_TYPE_ID.keys())
@@ -1517,7 +1551,7 @@ def draw_card_by_passcode_mode():
                 cursor = conn.cursor()
                 query = """
                     SELECT texts.name, datas.id, texts.desc, datas.type, datas.level,
-                           datas.attribute, datas.race, datas.atk, datas.def
+                    datas.attribute, datas.race, datas.atk, datas.def, datas.alias
                     FROM texts
                     JOIN datas ON texts.id = datas.id
                     WHERE datas.id = ?
@@ -1526,7 +1560,7 @@ def draw_card_by_passcode_mode():
                 result = cursor.fetchone()
                 if result:
                     print(f"Card found in: {db_path}")
-                    card_name, card_id, description, card_type, level_rank, attribute, race, atk, defe = result
+                    card_name, card_id, description, card_type, level_rank, attribute, race, atk, defe, alias = result
                     level = level_rank & 0xFF
                     scale_left = (level_rank >> 24) & 0xFF
                     scale_right = (level_rank >> 16) & 0xFF
@@ -1549,6 +1583,8 @@ def draw_card_by_passcode_mode():
                             type_ability = MONSTER_RACES.get(race, "Unknown")
                         else:
                             type_ability = f"{MONSTER_RACES.get(race, 'Unknown')} / {card_type_description.strip()}"
+                    elif card_category == "Other":
+                        type_ability = "Legendary Dragon"  # Exact string to appear on the card
                     else:
                         type_ability = f"{card_category} Card"
 
@@ -1577,13 +1613,14 @@ def draw_card_by_passcode_mode():
                         "category": card_category,
                         "sf": sf_icon,
                         "passcode": str(card_id),
-                        "type_id": card_type
+                        "type_id": card_type,
+                        "alias": alias
                     }
 
                     pendulum_type_ids = {
                         16777233, 16777249, 50331681, 16781329,
                         16777313, 16777377, 16781345, 16777761,
-                        18874401, 16785441, 25165857
+                        18874401, 16785441, 25165857, 25174113  # Added Z-Arc type ID here
                     }
                     if card_info["type_id"] in pendulum_type_ids:
                         pend, desc = extract_pendulum_parts(description)
@@ -1696,7 +1733,11 @@ def manual_mode_step_by_step(base_dir):
         "Obelisk.png": 103,
         "Ra.png": 104,
         "Slifer.png": 105,
-        "Z-Arc.png": 106,
+        "Evil_god.png": 106,
+        "Raviel.png": 107,
+        "Hamon.png": 108,
+        "Uria.png": 109,
+        "Z-Arc.png": 25174113,
         "Link.png": 67108865,
         "Pen_Fusion.png": 16777313,
         "Pen_Ritual.png": 16777377,
@@ -2856,114 +2897,161 @@ def generate_by_database(filter_type=None):
         with open(ydk_path, "r", encoding="utf-8") as f:
             existing_missing = {line.strip() for line in f if line.strip().isdigit()}
 
-    root = tk.Tk()
-    root.withdraw()
-    cdb_path = filedialog.askopenfilename(
-        title="Select a .cdb database file",
-        filetypes=[("CDB files", "*.cdb")]
-    )
+    # Check if we're processing all databases
+    if filter_type == "a" or filter_type == "all":
+        print("Processing all loaded databases...")
+        db_paths_to_process = database_paths
+    else:
+        # User selects a single database
+        root = tk.Tk()
+        root.withdraw()
+        cdb_path = filedialog.askopenfilename(
+            title="Select a .cdb database file",
+            filetypes=[("CDB files", "*.cdb")]
+        )
 
-    if not cdb_path:
-        print("No .cdb file selected.")
-        return
+        if not cdb_path:
+            print("No .cdb file selected.")
+            return
+        
+        db_paths_to_process = [cdb_path]
 
-    try:
-        conn = sqlite3.connect(cdb_path)
-        cursor = conn.cursor()
-        query = """
-            SELECT texts.name, datas.id, texts.desc, datas.type, datas.level,
-                   datas.attribute, datas.race, datas.atk, datas.def
-            FROM texts
-            JOIN datas ON texts.id = datas.id
-        """
-        cursor.execute(query)
-        results = cursor.fetchall()
+    # Process each database
+    total_cards_processed = 0
+    total_cards_rendered = 0
+    
+    for db_path in db_paths_to_process:
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            query = """
+                SELECT texts.name, datas.id, texts.desc, datas.type, datas.level,
+                       datas.attribute, datas.race, datas.atk, datas.def, datas.alias
+                FROM texts
+                JOIN datas ON texts.id = datas.id
+            """
+            cursor.execute(query)
+            results = cursor.fetchall()
+            
+            db_name = os.path.basename(db_path)
+            print(f"📦 Processing {len(results)} cards from {db_name}...")
+            
+            cards_rendered = 0
+            for result in results:
+                total_cards_processed += 1
+                card_name, card_id, description, card_type, level_rank, attribute, race, atk, defe, alias = result
+                if card_id in excluded_ids:
+                    print(f"❌ Skipping {card_id}: Explicitly excluded.")
+                    continue
+                level = level_rank & 0xFF
+                scale_left = (level_rank >> 24) & 0xFF
+                scale_right = (level_rank >> 16) & 0xFF
+                card_category, card_type_description = get_card_category(card_type)
 
-        print(f"📦 Processing {len(results)} cards from {os.path.basename(cdb_path)}...")
+                if card_category == "Unknown" or card_type_description is None:
+                    print(f"Skipping {card_id}: Unknown card type ({card_type})")
+                    continue
 
-        for result in results:
-            card_name, card_id, description, card_type, level_rank, attribute, race, atk, defe = result
-            if card_id in excluded_ids:
-                print(f"❌ Skipping {card_id}: Explicitly excluded.")
-                continue
-            level = level_rank & 0xFF
-            scale_left = (level_rank >> 24) & 0xFF
-            scale_right = (level_rank >> 16) & 0xFF
-            card_category, card_type_description = get_card_category(card_type)
+                # Apply filter if provided (except for 'a'/'all' which we handled earlier)
+                if filter_type and filter_type not in ["a", "all"] and filter_type not in card_type_description.lower():
+                    continue
 
-            if card_category == "Unknown" or card_type_description is None:
-                print(f"Skipping {card_id}: Unknown card type ({card_type})")
-                continue
+                if "Link" in card_type_description:
+                    link_rating = level_rank
+                    link_markers = get_link_marker_positions(defe)
+                   
+                if card_category == "Monster":
+                    type_ability = MONSTER_RACES.get(race, "Unknown") if card_type_description.strip() == "Normal" \
+                        else f"{MONSTER_RACES.get(race, 'Unknown')} / {card_type_description.strip()}"
+                elif card_category == "Other":
+                    type_ability = "Legendary Dragon"  # Exact string to appear on the card
+                else:
+                    type_ability = f"{card_category} Card"
 
-            if filter_type and filter_type not in card_type_description.lower():
-                continue
+                sf_icon = "NO ICON"
+                if card_category in ["Spell", "Trap"]:
+                    icon_keywords = {
+                        "field": "FIELD", "equip": "EQUIP", "continuous": "CONTINUOUS",
+                        "ritual": "RITUAL", "quick-play": "QUICK-PLAY", "counter": "COUNTER"
+                    }
+                    for keyword, icon in icon_keywords.items():
+                        if keyword in card_type_description.lower():
+                            sf_icon = icon
+                            break
 
-            if "Link" in card_type_description:
-                link_rating = level_rank
-                link_markers = get_link_marker_positions(defe)
-
-            if card_category == "Monster":
-                type_ability = MONSTER_RACES.get(race, "Unknown") if card_type_description.strip() == "Normal" \
-                    else f"{MONSTER_RACES.get(race, 'Unknown')} / {card_type_description.strip()}"
-            else:
-                type_ability = f"{card_category} Card"
-
-            sf_icon = "NO ICON"
-            if card_category in ["Spell", "Trap"]:
-                icon_keywords = {
-                    "field": "FIELD", "equip": "EQUIP", "continuous": "CONTINUOUS",
-                    "ritual": "RITUAL", "quick-play": "QUICK-PLAY", "counter": "COUNTER"
+                card_info = {
+                    "name": card_name,
+                    "pendulum_effect": None,
+                    "description": description,
+                    "attribute": ATTRIBUTES.get(attribute, "Unknown"),
+                    "level": level,
+                    "scale_left": scale_left,
+                    "scale_right": scale_right,
+                    "atk": "?" if atk == -2 else str(atk),
+                    "def": "?" if defe in (None, -2) else str(defe),
+                    "type_ability": type_ability,
+                    "category": card_category,
+                    "sf": sf_icon,
+                    "passcode": str(card_id),
+                    "type_id": card_type,
+                    "alias": alias  # Add alias to card_info
                 }
-                for keyword, icon in icon_keywords.items():
-                    if keyword in card_type_description.lower():
-                        sf_icon = icon
-                        break
 
-            card_info = {
-                "name": card_name,
-                "pendulum_effect": None,
-                "description": description,
-                "attribute": ATTRIBUTES.get(attribute, "Unknown"),
-                "level": level,
-                "scale_left": scale_left,
-                "scale_right": scale_right,
-                "atk": "?" if atk == -2 else str(atk),
-                "def": "?" if defe in (None, -2) else str(defe),
-                "type_ability": type_ability,
-                "category": card_category,
-                "sf": sf_icon,
-                "passcode": str(card_id),
-                "type_id": card_type
-            }
+                pendulum_type_ids = {
+                    16777233, 16777249, 50331681, 16781329,
+                    16777313, 16777377, 16781345, 16777761,
+                    18874401, 16785441, 25165857, 25174113  # Added Z-Arc type ID here
+                }
 
-            pendulum_type_ids = {
-                16777233, 16777249, 50331681, 16781329,
-                16777313, 16777377, 16781345, 16777761,
-                18874401, 16785441, 25165857
-            }
+                if card_info["type_id"] in pendulum_type_ids:
+                    pend, desc = extract_pendulum_parts(description)
+                    card_info["pendulum_effect"] = pend
+                    card_info["description"] = desc
 
-            if card_info["type_id"] in pendulum_type_ids:
-                pend, desc = extract_pendulum_parts(description)
-                card_info["pendulum_effect"] = pend
-                card_info["description"] = desc
-
-            test_img = Image.new("RGBA", (813, 1185), (0, 0, 0, 0))
-            if not place_card_art(test_img, card_info["passcode"]):
+                # Check if artwork can be found for passcode or alias
                 passcode_str = str(card_id)
-                if passcode_str not in existing_missing:
-                    with open(ydk_path, "a", encoding="utf-8") as ydk:
-                        ydk.write(f"{passcode_str}\n")
-                    print(f"📝 Logged missing art: {passcode_str}")
-                    existing_missing.add(passcode_str)
-                continue
-
-            draw_card_image(card_info, BASE_DIR, output_dir)
-
-    except sqlite3.Error as e:
-        print(f"❌ Error reading from {cdb_path}: {e}")
-    finally:
-        conn.close()
-
+                # Manually check if artwork exists before attempting to draw
+                found_artwork = False
+                
+                # Try with original passcode first
+                search_dir = Path("X:/Temps/YGOpro pic project/all high res pics")
+                for ext in [".jpg", ".jpeg", ".png"]:
+                    image_path = search_dir / f"{passcode_str}{ext}"
+                    if image_path.exists():
+                        found_artwork = True
+                        break
+                
+                # If alias is provided and original artwork not found, try with alias
+                if not found_artwork and alias and alias != 0 and alias != card_id:
+                    alias_str = str(alias)
+                    for ext in [".jpg", ".jpeg", ".png"]:
+                        image_path = search_dir / f"{alias_str}{ext}"
+                        if image_path.exists():
+                            found_artwork = True
+                            break
+                
+                # If artwork was found, draw the card
+                if found_artwork:
+                    if draw_card_image(card_info, BASE_DIR, output_dir):
+                        cards_rendered += 1
+                        total_cards_rendered += 1
+                else:
+                    # Only add to missing art if both passcode and alias artwork are missing
+                    if passcode_str not in existing_missing:
+                        with open(ydk_path, "a", encoding="utf-8") as ydk:
+                            ydk.write(f"{passcode_str}\n")
+                        print(f"📝 Logged missing art: {passcode_str}")
+                        existing_missing.add(passcode_str)
+            
+            print(f"✅ Rendered {cards_rendered}/{len(results)} cards from {db_name}")
+        
+        except sqlite3.Error as e:
+            print(f"❌ Error reading from {db_path}: {e}")
+        finally:
+            conn.close()
+    
+    print(f"🎉 Process complete! Rendered {total_cards_rendered}/{total_cards_processed} cards total.")
+    
 def generate_from_ydk_file():
     import tkinter as tk
     from tkinter import filedialog
@@ -2998,7 +3086,7 @@ def generate_from_ydk_file():
                 cursor = conn.cursor()
                 query = """
                     SELECT texts.name, datas.id, texts.desc, datas.type, datas.level,
-                           datas.attribute, datas.race, datas.atk, datas.def
+                           datas.attribute, datas.race, datas.atk, datas.def, datas.alias
                     FROM texts
                     JOIN datas ON texts.id = datas.id
                     WHERE datas.id = ?
@@ -3006,7 +3094,7 @@ def generate_from_ydk_file():
                 cursor.execute(query, (passcode,))
                 result = cursor.fetchone()
                 if result:
-                    card_name, card_id, description, card_type, level_rank, attribute, race, atk, defe = result
+                    card_name, card_id, description, card_type, level_rank, attribute, race, atk, defe, alias = result
                     level = level_rank & 0xFF
                     scale_left = (level_rank >> 24) & 0xFF
                     scale_right = (level_rank >> 16) & 0xFF
@@ -3027,6 +3115,8 @@ def generate_from_ydk_file():
                     if card_category == "Monster":
                         type_ability = MONSTER_RACES.get(race, "Unknown") if card_type_description.strip() == "Normal" \
                             else f"{MONSTER_RACES.get(race, 'Unknown')} / {card_type_description.strip()}"
+                    elif card_category == "Other":
+                        type_ability = "Legendary Dragon"  # Exact string to appear on the card
                     else:
                         type_ability = f"{card_category} Card"
 
@@ -3055,13 +3145,14 @@ def generate_from_ydk_file():
                         "category": card_category,
                         "sf": sf_icon,
                         "passcode": str(card_id),
-                        "type_id": card_type
+                        "type_id": card_type,
+                        "alias": alias  # Add the alias to card_info
                     }
 
                     pendulum_type_ids = {
                         16777233, 16777249, 50331681, 16781329,
                         16777313, 16777377, 16781345, 16777761,
-                        18874401, 16785441, 25165857
+                        18874401, 16785441, 25165857, 25174113  # Added Z-Arc type ID here
                     }
 
                     if card_info["type_id"] in pendulum_type_ids:
@@ -3069,15 +3160,14 @@ def generate_from_ydk_file():
                         card_info["pendulum_effect"] = pend
                         card_info["description"] = desc
 
-                    # Pre-check if artwork exists before rendering
-                    test_img = Image.new("RGBA", (813, 1185), (0, 0, 0, 0))
-                    if not place_card_art(test_img, card_info["passcode"]):
-                        print(f"Skipping {card_info['passcode']}: Missing artwork.")
+                    # We don't need the artwork pre-check anymore since our draw_card_image function
+                    # will now handle this internally with alias support
+                    if draw_card_image(card_info, BASE_DIR, output_dir):
+                        found = True
+                        break
+                    else:
+                        print(f"Skipping {card_info['passcode']}: Could not render card.")
                         continue
-
-                    draw_card_image(card_info, BASE_DIR, output_dir)
-                    found = True
-                    break
             except sqlite3.Error as e:
                 print(f"Error accessing database {db_path}: {e}")
             finally:
@@ -3088,7 +3178,7 @@ def generate_from_ydk_file():
 
     print("✅ Done processing .ydk file.")
     input("Press Enter to return to the main menu...")
-
+    
 def prompt_mode_selection():
     print("=== Yu-Gi-Oh! Card Renderer ===")
     print("Usage:")
@@ -3115,10 +3205,6 @@ def prompt_mode_selection():
 
 # === Main Menu Logic ===
 
-
-#SeriesNum = prompt_series_selection()
-
-
 def main_menu_loop():
     global SeriesNum
     while True:
@@ -3127,10 +3213,11 @@ def main_menu_loop():
         print("Usage:")
         print("  P            → Draw a card by passcode")
         print("  Y            → Select a .ydk file and draw all cards inside")
-        print("  D            → Select a .cdb file and draw all cards inside")
+        print("  D            → Select a .cdb database file and draw all cards inside")
         print("  D -pen       → Only draw Pendulum cards")
         print("  D -lin       → Only draw Link cards")
         print("  D -xyz       → Only draw Xyz cards")
+        print("  D -a         → Process ALL loaded databases")
         print("  M            → Manually create a card step-by-step")
         print("  F            → Use the form-based manual creator")
         print("  S            → Switch layout series")
@@ -3140,7 +3227,7 @@ def main_menu_loop():
         match = re.match(r"^([A-Za-z])\s*-?(\w{3})?$", mode_input, re.IGNORECASE)
 
         if not match:
-            print("❌ Invalid input format. Try 'D -pen', 'Y -xyz', etc.")
+            print("❌ Invalid input format. Try 'D -pen', 'Y -xyz', 'D -a', etc.")
             continue
 
         mode = match.group(1).upper()
@@ -3160,12 +3247,11 @@ def main_menu_loop():
             generate_from_ydk_file()
         elif mode == "M":
             BASE_DIR = Path("F:/YGOPro/pics/templates/PythonCardMaker/Series " + SeriesNum)
-            #manual_mode_step_by_step(BASE_DIR)
             manual_mode_with_form(BASE_DIR)
         elif mode == "F":
             launch_form_mode()
         else:
             print("❌ Unknown mode. Try again.")
-
+            
 # Start the main menu loop
 main_menu_loop()
